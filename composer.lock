@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b7531f73c7a0f0d5c4e7e8690992afc1",
+    "content-hash": "f3109164f6b26f0983df98156d509284",
     "packages": [
         {
             "name": "brick/math",
@@ -1053,6 +1053,72 @@
                 }
             ],
             "time": "2025-02-03T10:55:03+00:00"
+        },
+        {
+            "name": "iaewing/laravel-opensky",
+            "version": "v1.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/iaewing/laravel-opensky.git",
+                "reference": "2f1d9f85020cf9a651f2b00fe69d471ce7b8b264"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iaewing/laravel-opensky/zipball/2f1d9f85020cf9a651f2b00fe69d471ce7b8b264",
+                "reference": "2f1d9f85020cf9a651f2b00fe69d471ce7b8b264",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.0",
+                "illuminate/http": "^9.0|^10.0|^11.0|^12.0",
+                "illuminate/support": "^9.0|^10.0|^11.0|^12.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.4",
+                "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0",
+                "pestphp/pest": "^2.0",
+                "pestphp/pest-plugin-laravel": "^2.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "OpenSky": "OpenSky\\Laravel\\Facades\\OpenSky"
+                    },
+                    "providers": [
+                        "OpenSky\\Laravel\\OpenSkyServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "OpenSky\\Laravel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ian Ewing",
+                    "email": "ian@ewing.codes"
+                }
+            ],
+            "description": "Laravel package for OpenSky Network API integration",
+            "keywords": [
+                "OpenSky",
+                "api",
+                "aviation",
+                "flight-tracking",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/iaewing/laravel-opensky/issues",
+                "source": "https://github.com/iaewing/laravel-opensky/tree/v1.2.0"
+            },
+            "time": "2025-06-26T20:34:02+00:00"
         },
         {
             "name": "inertiajs/inertia-laravel",
