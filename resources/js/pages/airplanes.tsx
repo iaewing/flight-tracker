@@ -3,25 +3,78 @@ import MapComponent from '@/components/map';
 import { useEffect, useState } from 'react';
 import { getCountryCode } from '@/countryNameToCode';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Airplanes',
-        href: '/airplanes',
-    },
-];
+interface FlightData {
+    lat: number;
+    lng: number;
+    callsign: string;
+    originCountry: string;
+    hasMovement: boolean;
+    icao24: string;
+    velocity?: number;
+    baroAltitude?: number;
+    onGround: boolean;
+    flightPath: Array<{
+        lat: number;
+        lng: number;
+        timestamp: number;
+        altitude?: number;
+        velocity?: number;
+    }>;
+    pathLength: number;
+}
 
 export default function Airplanes({ airplanes }: { airplanes: any }) {
-    const [flights, setFlights] = useState<{ lat: number; lng: number; callsign: string; originCountry: string }[]>([]);
+    const [flights, setFlights] = useState<FlightData[]>([]);
 
     useEffect(() => {
-        setFlights(airplanes.map((airplane: any) => ({ lat: airplane.latitude, lng: airplane.longitude, callsign: airplane.callsign, originCountry: getCountryCode(airplane.originCountry) })));
+        setFlights(airplanes.map((airplane: any) => ({
+            lat: airplane.latitude,
+            lng: airplane.longitude,
+            callsign: airplane.callsign,
+            originCountry: getCountryCode(airplane.originCountry),
+            hasMovement: airplane.hasMovement,
+            icao24: airplane.icao24,
+            velocity: airplane.velocity,
+            baroAltitude: airplane.baroAltitude,
+            onGround: airplane.onGround,
+            flightPath: airplane.flightPath || [],
+            pathLength: airplane.pathLength || 0
+        })));
     }, [airplanes]);
+
+    const movingFlights = flights.filter(f => f.hasMovement);
+    const stationaryFlights = flights.filter(f => !f.hasMovement && !f.onGround);
+    const groundedFlights = flights.filter(f => f.onGround);
 
     return (
         <>
-            <h1>Airplanes</h1>
-            <div>
-                <p>Total: {airplanes.length}</p>
+            <h1>Live Flight Tracker - 60 Minute History</h1>
+            <div className="mb-4 grid grid-cols-4 gap-4">
+                <div className="bg-blue-100 p-3 rounded">
+                    <p className="text-sm text-gray-600">Total Aircraft</p>
+                    <p className="text-2xl font-bold">{airplanes.length}</p>
+                </div>
+                <div className="bg-green-100 p-3 rounded">
+                    <p className="text-sm text-gray-600">Moving</p>
+                    <p className="text-2xl font-bold text-green-600">{movingFlights.length}</p>
+                </div>
+                <div className="bg-red-100 p-3 rounded">
+                    <p className="text-sm text-gray-600">Stationary</p>
+                    <p className="text-2xl font-bold text-red-600">{stationaryFlights.length}</p>
+                </div>
+                <div className="bg-gray-100 p-3 rounded">
+                    <p className="text-sm text-gray-600">On Ground</p>
+                    <p className="text-2xl font-bold text-gray-600">{groundedFlights.length}</p>
+                </div>
+            </div>
+            <div className="mb-4 p-4 bg-blue-50 rounded">
+                <h3 className="font-semibold mb-2">How to use:</h3>
+                <ul className="text-sm space-y-1">
+                    <li>🟢 Green markers: Aircraft with detected movement</li>
+                    <li>🔴 Red markers: Stationary aircraft</li>
+                    <li>⚫ Gray markers: Aircraft on ground</li>
+                    <li>📍 Click any moving aircraft to toggle flight path</li>
+                </ul>
             </div>
             <div>
                 <MapComponent flights={flights} />
@@ -40,25 +93,6 @@ export default function Airplanes({ airplanes }: { airplanes: any }) {
                     )
                 })}
             </div>
-            {/* public readonly string $icao24,
-        public readonly ?string $callsign,
-        public readonly string $originCountry,
-        public readonly ?int $timePosition,
-        public readonly int $lastContact,
-        public readonly ?float $longitude,
-        public readonly ?float $latitude,
-        public readonly ?float $baroAltitude,
-        public readonly bool $onGround,
-        public readonly ?float $velocity,
-        public readonly ?float $trueTrack,
-        public readonly ?float $verticalRate,
-        public readonly ?array $sensors,
-        public readonly ?float $geoAltitude,
-        public readonly ?string $squawk,
-        public readonly bool $spi,
-        public readonly int $positionSource,
-        public readonly ?int $category = null */}
         </>
-
     );
 }
