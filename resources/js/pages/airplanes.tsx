@@ -52,7 +52,7 @@ export default function Airplanes({ airplanes }: { airplanes: any }) {
             <div className="mb-4 grid grid-cols-4 gap-4">
                 <div className="bg-blue-100 p-3 rounded">
                     <p className="text-sm text-gray-600">Total Aircraft</p>
-                    <p className="text-2xl font-bold">{airplanes.length}</p>
+                    <p className="text-2xl font-bold text-gray-600">{airplanes.length}</p>
                 </div>
                 <div className="bg-green-100 p-3 rounded">
                     <p className="text-sm text-gray-600">Moving</p>
@@ -67,7 +67,7 @@ export default function Airplanes({ airplanes }: { airplanes: any }) {
                     <p className="text-2xl font-bold text-gray-600">{groundedFlights.length}</p>
                 </div>
             </div>
-            <div className="mb-4 p-4 bg-blue-50 rounded">
+            <div className="mb-4 p-4 bg-blue-50 rounded text-gray-600">
                 <h3 className="font-semibold mb-2">How to use:</h3>
                 <ul className="text-sm space-y-1">
                     <li>🟢 Green markers: Aircraft with detected movement</li>
