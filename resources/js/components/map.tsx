@@ -45,7 +45,7 @@ const MapComponent = ({ flights }: { flights: FlightData[] }) => {
         <MapContainer
             center={[flights[0].lat, flights[0].lng]}
             zoom={11}
-            style={{ height: "500px", width: "100%" }}
+            style={{ height: "1000px", width: "100%" }}
         >
             <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
