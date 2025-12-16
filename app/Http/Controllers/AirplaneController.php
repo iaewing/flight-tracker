@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use OpenSky\Laravel\Facades\OpenSky;
 use OpenSky\Laravel\Client\OpenSkyClient;
-use Illuminate\Support\Facades\Cache;
+use OpenSky\Laravel\Client\OpenSkyConfig;
 use Illuminate\Support\Facades\Log;
 
 class AirplaneController extends Controller
@@ -13,11 +12,13 @@ class AirplaneController extends Controller
     public function index()
     {
         // Initialize OpenSky client with OAuth credentials from config
-        $openSky = new OpenSkyClient(
+        $config = new OpenSkyConfig(
             clientId: config('opensky.client_id'),
             clientSecret: config('opensky.client_secret'),
+            oauthTokenUrl: config('opensky.oauth_token_url'),
         );
-        
+        $openSky = new OpenSkyClient($config);
+
         // Define bounding box for Toronto area
         $bounds = [
             'lamin' => 43.184334,
@@ -25,84 +26,102 @@ class AirplaneController extends Controller
             'lamax' => 43.919330,
             'lomax' => -79.135895
         ];
-        
-        // Get multiple time snapshots (current, 1min ago, 2min ago, 3min ago, 4min ago, 5min ago)
-        $snapshots = $this->getHistoricalSnapshots($openSky, $bounds);
-        
-        // Combine the data to track movement over time
-        $flightsWithPaths = $this->combineHistoricalData($snapshots);
-        
+
+        // Get currently airborne flights
+        $currentStates = $this->getCurrentStateVectors($openSky, $bounds);
+        Log::info('Current state vectors retrieved', ['count' => count($currentStates)]);
+
+        // Get historical state vectors for flight paths
+        $historicalSnapshots = $this->getHistoricalStateVectors($openSky, $bounds);
+        Log::info('Historical snapshots retrieved', ['count' => count($historicalSnapshots)]);
+
+        // Format flight data with paths for frontend
+        $flightsWithPaths = $this->enrichFlightsWithPaths($currentStates, $historicalSnapshots);
+        Log::info('Formatted flights with paths', ['count' => count($flightsWithPaths)]);
+
         return Inertia::render('airplanes', [
             'airplanes' => $flightsWithPaths
         ]);
     }
-    
-    private function getHistoricalSnapshots($openSky, $bounds)
+
+    private function getCurrentStateVectors($openSky, $bounds)
+    {
+        try {
+            $response = $openSky->getAllStateVectors(
+                lamin: $bounds['lamin'],
+                lomin: $bounds['lomin'],
+                lamax: $bounds['lamax'],
+                lomax: $bounds['lomax']
+            );
+
+            return $response->states ?? [];
+        } catch (\Exception $e) {
+            Log::error("Failed to get current state vectors: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    private function getHistoricalStateVectors($openSky, $bounds)
     {
         $snapshots = [];
         $currentTime = time();
-        
-        // Get snapshots every 3 minutes for the past 60 minutes (21 snapshots total)
+
+        // Get snapshots every 3 minutes for the past 60 minutes
         for ($minutesAgo = 0; $minutesAgo <= 60; $minutesAgo += 3) {
-            $timestamp = $currentTime - ($minutesAgo * 60); // Unix timestamp minus seconds
+            $timestamp = $currentTime - ($minutesAgo * 60);
 
             try {
-                $snapshot = $openSky->getAllStateVectors(
+                $response = $openSky->getAllStateVectors(
                     lamin: $bounds['lamin'],
                     lomin: $bounds['lomin'],
                     lamax: $bounds['lamax'],
                     lomax: $bounds['lomax'],
                     time: $timestamp
                 );
-                
+
                 $snapshots[$minutesAgo] = [
                     'timestamp' => $timestamp,
-                    'states' => $snapshot->states ?? [],
-                    'request_time' => date('Y-m-d H:i:s', $timestamp),
+                    'states' => $response->states ?? [],
                     'minutes_ago' => $minutesAgo
                 ];
+
+                Log::debug("Retrieved snapshot at $minutesAgo minutes ago with " . count($response->states ?? []) . " aircraft");
             } catch (\Exception $e) {
-                // If historical data fails, continue with other snapshots
-                Log::error("Failed to get snapshot for {$minutesAgo} minutes ago (timestamp: {$timestamp}): " . $e->getMessage());
+                Log::warning("Failed to get snapshot at $minutesAgo minutes ago: " . $e->getMessage());
                 $snapshots[$minutesAgo] = [
                     'timestamp' => $timestamp,
                     'states' => [],
-                    'request_time' => date('Y-m-d H:i:s', $timestamp),
-                    'minutes_ago' => $minutesAgo,
-                    'error' => $e->getMessage()
+                    'minutes_ago' => $minutesAgo
                 ];
             }
         }
-        
+
         return $snapshots;
     }
-    
-    private function combineHistoricalData($snapshots)
+
+    private function enrichFlightsWithPaths($currentStates, $historicalSnapshots)
     {
-        $combined = [];
-        
-        // Use current snapshot (0 minutes ago) as base
-        $currentStates = $snapshots[0]['states'] ?? [];
-        
-        foreach ($currentStates as $currentState) {
-            if (!$currentState->latitude || !$currentState->longitude) {
+        $formatted = [];
+
+        foreach ($currentStates as $state) {
+            // Skip if missing position data
+            if (!$state->latitude || !$state->longitude) {
                 continue;
             }
-            
-            $icao24 = $currentState->icao24;
+
+            $icao24 = $state->icao24;
             $flightPath = [];
-            $hasMovement = false;
-            
-            // Build flight path from historical data (oldest to newest)
+
+            // Build flight path from historical snapshots (oldest to newest)
             for ($minutesAgo = 60; $minutesAgo >= 0; $minutesAgo -= 3) {
-                $snapshot = $snapshots[$minutesAgo] ?? null;
+                $snapshot = $historicalSnapshots[$minutesAgo] ?? null;
                 if (!$snapshot) continue;
-                
+
                 // Find this aircraft in the historical snapshot
-                $historicalState = collect($snapshot['states'])->first(function ($state) use ($icao24) {
-                    return $state->icao24 === $icao24;
+                $historicalState = collect($snapshot['states'])->first(function ($s) use ($icao24) {
+                    return $s->icao24 === $icao24;
                 });
-                
+
                 if ($historicalState && $historicalState->latitude && $historicalState->longitude) {
                     $flightPath[] = [
                         'lat' => $historicalState->latitude,
@@ -113,64 +132,49 @@ class AirplaneController extends Controller
                     ];
                 }
             }
-            
-            // Check if aircraft has moved significantly
-            if (count($flightPath) >= 2) {
-                $firstPoint = $flightPath[0];
-                $lastPoint = end($flightPath);
-                
-                $latDiff = abs($firstPoint['lat'] - $lastPoint['lat']);
-                $lonDiff = abs($firstPoint['lng'] - $lastPoint['lng']);
-                
-                // Consider movement significant if position changed by more than 0.005 degrees
-                // This is roughly 500 meters over 60 minutes (very conservative for aircraft)
-                $hasMovement = ($latDiff > 0.005 || $lonDiff > 0.005);
-            }
-            
-            $combined[] = [
+
+            // Determine if flight is moving (has history OR currently moving)
+            $hasMovement = count($flightPath) > 0 || ($state->velocity > 0 && !$state->onGround);
+
+            $formatted[] = [
                 'icao24' => $icao24,
-                'callsign' => trim($currentState->callsign ?: 'Unknown'),
-                'originCountry' => $currentState->originCountry,
-                'timePosition' => $currentState->timePosition,
-                'lastContact' => $currentState->lastContact,
-                'velocity' => $currentState->velocity,
-                'verticalRate' => $currentState->verticalRate,
-                'baroAltitude' => $currentState->baroAltitude,
-                'onGround' => $currentState->onGround,
-                // Current position
-                'latitude' => $currentState->latitude,
-                'longitude' => $currentState->longitude,
-                // Flight path data
-                'flightPath' => $flightPath,
+                'callsign' => trim($state->callsign ?: 'Unknown'),
+                'originCountry' => $state->originCountry,
+                'latitude' => $state->latitude,
+                'longitude' => $state->longitude,
+                'velocity' => $state->velocity,
+                'baroAltitude' => $state->baroAltitude,
+                'onGround' => $state->onGround,
                 'hasMovement' => $hasMovement,
                 'pathLength' => count($flightPath),
+                'flightPath' => $flightPath,
             ];
         }
-        
-        return $combined;
+
+        return $formatted;
     }
-    
+
     private function combineFlightData($firstStates, $secondStates)
     {
         $combined = [];
-        
+
         // Create a lookup for second states by ICAO24
         $secondStatesLookup = [];
         foreach ($secondStates as $state) {
             $secondStatesLookup[$state->icao24] = $state;
         }
-        
+
         // Combine first and second states for aircraft present in both
         foreach ($firstStates as $firstState) {
             $icao24 = $firstState->icao24;
-            
+
             if (isset($secondStatesLookup[$icao24])) {
                 $secondState = $secondStatesLookup[$icao24];
-                
+
                 // Only include if both positions are valid
                 if ($firstState->latitude && $firstState->longitude && 
                     $secondState->latitude && $secondState->longitude) {
-                    
+
                     $combined[] = [
                         'icao24' => $icao24,
                         'callsign' => trim($firstState->callsign ?: 'Unknown'),
@@ -193,15 +197,15 @@ class AirplaneController extends Controller
                 }
             }
         }
-        
+
         return $combined;
     }
-    
+
     private function hasSignificantMovement($firstState, $secondState)
     {
         $latDiff = abs($firstState->latitude - $secondState->latitude);
         $lonDiff = abs($firstState->longitude - $secondState->longitude);
-        
+
         // Consider movement significant if position changed by more than 0.001 degrees
         // This is roughly 100 meters
         return ($latDiff > 0.001 || $lonDiff > 0.001);
