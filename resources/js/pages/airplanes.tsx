@@ -1,44 +1,24 @@
-import { type BreadcrumbItem } from '@/types';
 import MapComponent from '@/components/map';
 import { useEffect, useState } from 'react';
 import { getCountryCode } from '@/countryNameToCode';
+import { FlightData } from '@/types/flights';
 
-interface FlightData {
-    lat: number;
-    lng: number;
-    callsign: string;
-    originCountry: string;
-    hasMovement: boolean;
-    icao24: string;
-    velocity?: number;
-    baroAltitude?: number;
-    onGround: boolean;
-    flightPath: Array<{
-        lat: number;
-        lng: number;
-        timestamp: number;
-        altitude?: number;
-        velocity?: number;
-    }>;
-    pathLength: number;
-}
-
-export default function Airplanes({ airplanes }: { airplanes: any }) {
+export default function Airplanes({ airplanes }: { airplanes: FlightData[] }) {
     const [flights, setFlights] = useState<FlightData[]>([]);
 
     useEffect(() => {
-        setFlights(airplanes.map((airplane: any) => ({
-            lat: airplane.latitude,
-            lng: airplane.longitude,
-            callsign: airplane.callsign,
-            originCountry: getCountryCode(airplane.originCountry),
-            hasMovement: airplane.hasMovement,
+        setFlights(airplanes.map((airplane: FlightData) => ({
             icao24: airplane.icao24,
+            callsign: airplane.callsign,
+            originCountry: getCountryCode(airplane.originCountry) || 'Unknown',
+            latitude: airplane.latitude,
+            longitude: airplane.longitude,
             velocity: airplane.velocity,
             baroAltitude: airplane.baroAltitude,
             onGround: airplane.onGround,
+            hasMovement: airplane.hasMovement,
+            pathLength: airplane.pathLength || 0,
             flightPath: airplane.flightPath || [],
-            pathLength: airplane.pathLength || 0
         })));
     }, [airplanes]);
 
@@ -78,20 +58,20 @@ export default function Airplanes({ airplanes }: { airplanes: any }) {
             </div>
             <div>
                 <MapComponent flights={flights} />
-                {airplanes.map((airplane: any) => {
-                    return (
-                        <div key={airplane.icao24}>
-                            <p>Callsign: {airplane.callsign}</p>
-                            <p>Origin Country: {airplane.originCountry}</p>
-                            <p>Time Position: {airplane.timePosition}</p>
-                            <p>Last Contact: {airplane.lastContact}</p>
-                            <p>Baro Altitude: {airplane.baroAltitude}</p>
-                            <p>On Ground: {airplane.onGround ? 'Yes' : 'No'}</p>
-                            <p>Velocity: {airplane.velocity}</p>
-                            <p>Vertical Rate: {airplane.verticalRate}</p>
-                        </div>
-                    )
-                })}
+                {/*{airplanes.map((airplane: any) => {*/}
+                {/*    return (*/}
+                {/*        <div key={airplane.icao24}>*/}
+                {/*            <p>Callsign: {airplane.callsign}</p>*/}
+                {/*            <p>Origin Country: {airplane.originCountry}</p>*/}
+                {/*            <p>Time Position: {airplane.timePosition}</p>*/}
+                {/*            <p>Last Contact: {airplane.lastContact}</p>*/}
+                {/*            <p>Baro Altitude: {airplane.baroAltitude}</p>*/}
+                {/*            <p>On Ground: {airplane.onGround ? 'Yes' : 'No'}</p>*/}
+                {/*            <p>Velocity: {airplane.velocity}</p>*/}
+                {/*            <p>Vertical Rate: {airplane.verticalRate}</p>*/}
+                {/*        </div>*/}
+                {/*    )*/}
+                {/*})}*/}
             </div>
         </>
     );
