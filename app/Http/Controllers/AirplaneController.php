@@ -22,7 +22,7 @@ class AirplaneController extends Controller
         // Define bounding box for Toronto area
         $bounds = [
             'lamin' => 43.184334,
-            'lomin' => -80.803070, 
+            'lomin' => -80.803070,
             'lamax' => 43.919330,
             'lomax' => -79.135895
         ];
@@ -37,7 +37,6 @@ class AirplaneController extends Controller
 
         // Format flight data with paths for frontend
         $flightsWithPaths = $this->enrichFlightsWithPaths($currentStates, $historicalSnapshots);
-        Log::info('Formatted flights with paths', ['count' => count($flightsWithPaths)]);
 
         return Inertia::render('airplanes', [
             'airplanes' => $flightsWithPaths
