@@ -28,50 +28,33 @@ export default function Airplanes({ airplanes }: { airplanes: FlightData[] }) {
 
     return (
         <>
-            <h1>Live Flight Tracker - 60 Minute History</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Live Flight Tracker — 60 Minute History</h1>
             <div className="mb-4 grid grid-cols-4 gap-4">
-                <div className="bg-blue-100 p-3 rounded">
-                    <p className="text-sm text-gray-600">Total Aircraft</p>
-                    <p className="text-2xl font-bold text-gray-600">{airplanes.length}</p>
+                <div className="bg-blue-50 p-3 rounded border border-blue-100">
+                    <p className="text-sm text-gray-500">Total Aircraft</p>
+                    <p className="text-2xl font-bold text-gray-800">{airplanes.length}</p>
                 </div>
-                <div className="bg-green-100 p-3 rounded">
-                    <p className="text-sm text-gray-600">Moving</p>
+                <div className="bg-green-50 p-3 rounded border border-green-100">
+                    <p className="text-sm text-gray-500">Moving</p>
                     <p className="text-2xl font-bold text-green-600">{movingFlights.length}</p>
                 </div>
-                <div className="bg-red-100 p-3 rounded">
-                    <p className="text-sm text-gray-600">Stationary</p>
-                    <p className="text-2xl font-bold text-red-600">{stationaryFlights.length}</p>
+                <div className={`p-3 rounded border ${stationaryFlights.length > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'}`}>
+                    <p className="text-sm text-gray-500">Stationary</p>
+                    <p className={`text-2xl font-bold ${stationaryFlights.length > 0 ? 'text-red-600' : 'text-gray-400'}`}>{stationaryFlights.length}</p>
                 </div>
-                <div className="bg-gray-100 p-3 rounded">
-                    <p className="text-sm text-gray-600">On Ground</p>
+                <div className="bg-gray-50 p-3 rounded border border-gray-100">
+                    <p className="text-sm text-gray-500">On Ground</p>
                     <p className="text-2xl font-bold text-gray-600">{groundedFlights.length}</p>
                 </div>
             </div>
-            <div className="mb-4 p-4 bg-blue-50 rounded text-gray-600">
-                <h3 className="font-semibold mb-2">How to use:</h3>
-                <ul className="text-sm space-y-1">
-                    <li>🟢 Green markers: Aircraft with detected movement</li>
-                    <li>🔴 Red markers: Stationary aircraft</li>
-                    <li>⚫ Gray markers: Aircraft on ground</li>
-                    <li>📍 Click any moving aircraft to toggle flight path</li>
-                </ul>
-            </div>
-            <div>
+            <div className="mb-4">
                 <MapComponent flights={flights} />
-                {/*{airplanes.map((airplane: any) => {*/}
-                {/*    return (*/}
-                {/*        <div key={airplane.icao24}>*/}
-                {/*            <p>Callsign: {airplane.callsign}</p>*/}
-                {/*            <p>Origin Country: {airplane.originCountry}</p>*/}
-                {/*            <p>Time Position: {airplane.timePosition}</p>*/}
-                {/*            <p>Last Contact: {airplane.lastContact}</p>*/}
-                {/*            <p>Baro Altitude: {airplane.baroAltitude}</p>*/}
-                {/*            <p>On Ground: {airplane.onGround ? 'Yes' : 'No'}</p>*/}
-                {/*            <p>Velocity: {airplane.velocity}</p>*/}
-                {/*            <p>Vertical Rate: {airplane.verticalRate}</p>*/}
-                {/*        </div>*/}
-                {/*    )*/}
-                {/*})}*/}
+            </div>
+            <div className="p-3 bg-gray-50 border border-gray-100 rounded text-gray-500 text-sm flex gap-6">
+                <span>🟢 Moving</span>
+                <span>🔴 Stationary</span>
+                <span>⚫ On Ground</span>
+                <span>📍 Click a moving aircraft to toggle its 60-min flight path</span>
             </div>
         </>
     );
