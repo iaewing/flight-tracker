@@ -5,41 +5,37 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use OpenSky\Laravel\Client\OpenSkyClient;
 use OpenSky\Laravel\Client\OpenSkyConfig;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class AirplaneController extends Controller
 {
     public function index()
     {
-        // Initialize OpenSky client with OAuth credentials from config
-        $config = new OpenSkyConfig(
-            clientId: config('opensky.client_id'),
-            clientSecret: config('opensky.client_secret'),
-            oauthTokenUrl: config('opensky.oauth_token_url'),
-        );
-        $openSky = new OpenSkyClient($config);
-
-        // Define bounding box for Toronto area
-        $bounds = [
-            'lamin' => 43.184334,
-            'lomin' => -80.803070,
-            'lamax' => 43.919330,
-            'lomax' => -79.135895
-        ];
-
-        // Get currently airborne flights
-        $currentStates = $this->getCurrentStateVectors($openSky, $bounds);
-        Log::info('Current state vectors retrieved', ['count' => count($currentStates)]);
-
-        // Get historical state vectors for flight paths
-        $historicalSnapshots = $this->getHistoricalStateVectors($openSky, $bounds);
-        Log::info('Historical snapshots retrieved', ['count' => count($historicalSnapshots)]);
-
-        // Format flight data with paths for frontend
-        $flightsWithPaths = $this->enrichFlightsWithPaths($currentStates, $historicalSnapshots);
-
         return Inertia::render('airplanes', [
-            'airplanes' => $flightsWithPaths
+            'airplanes' => Inertia::defer(fn() => Cache::remember('airplanes_data', 90, function () {
+                $config = new OpenSkyConfig(
+                    clientId: config('opensky.client_id'),
+                    clientSecret: config('opensky.client_secret'),
+                    oauthTokenUrl: config('opensky.oauth_token_url'),
+                );
+                $openSky = new OpenSkyClient($config);
+
+                $bounds = [
+                    'lamin' => 43.184334,
+                    'lomin' => -80.803070,
+                    'lamax' => 43.919330,
+                    'lomax' => -79.135895
+                ];
+
+                $currentStates = $this->getCurrentStateVectors($openSky, $bounds);
+                Log::info('Current state vectors retrieved', ['count' => count($currentStates)]);
+
+                $historicalSnapshots = $this->getHistoricalStateVectors($openSky, $bounds);
+                Log::info('Historical snapshots retrieved', ['count' => count($historicalSnapshots)]);
+
+                return $this->enrichFlightsWithPaths($currentStates, $historicalSnapshots);
+            })),
         ]);
     }
 

@@ -1,9 +1,14 @@
 import MapComponent from '@/components/map';
+import { Deferred } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { getCountryCode } from '@/countryNameToCode';
 import { FlightData } from '@/types/flights';
 
-export default function Airplanes({ airplanes }: { airplanes: FlightData[] }) {
+function StatCardSkeleton() {
+    return <div className="bg-gray-100 p-3 rounded border border-gray-100 animate-pulse h-[72px]" />;
+}
+
+function AirplanesContent({ airplanes }: { airplanes: FlightData[] }) {
     const [flights, setFlights] = useState<FlightData[]>([]);
 
     useEffect(() => {
@@ -28,7 +33,6 @@ export default function Airplanes({ airplanes }: { airplanes: FlightData[] }) {
 
     return (
         <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Live Flight Tracker — 60 Minute History</h1>
             <div className="mb-4 grid grid-cols-4 gap-4">
                 <div className="bg-blue-50 p-3 rounded border border-blue-100">
                     <p className="text-sm text-gray-500">Total Aircraft</p>
@@ -56,6 +60,30 @@ export default function Airplanes({ airplanes }: { airplanes: FlightData[] }) {
                 <span>⚫ On Ground</span>
                 <span>📍 Click a moving aircraft to toggle its 60-min flight path</span>
             </div>
+        </>
+    );
+}
+
+export default function Airplanes({ airplanes }: { airplanes?: FlightData[] }) {
+    return (
+        <>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Live Flight Tracker — 60 Minute History</h1>
+            <Deferred
+                data="airplanes"
+                fallback={
+                    <>
+                        <div className="mb-4 grid grid-cols-4 gap-4">
+                            <StatCardSkeleton />
+                            <StatCardSkeleton />
+                            <StatCardSkeleton />
+                            <StatCardSkeleton />
+                        </div>
+                        <div className="mb-4 w-full rounded bg-gray-100 animate-pulse" style={{ height: '600px' }} />
+                    </>
+                }
+            >
+                <AirplanesContent airplanes={airplanes ?? []} />
+            </Deferred>
         </>
     );
 }
