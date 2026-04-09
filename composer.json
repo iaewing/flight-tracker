@@ -10,7 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.5",
-        "iaewing/laravel-opensky": "^1.2",
+        "iaewing/laravel-opensky": "^1.3.1",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
