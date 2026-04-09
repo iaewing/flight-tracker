@@ -4,6 +4,7 @@ export interface FlightPath {
     timestamp: number;
     altitude?: number;
     velocity?: number;
+    trueTrack?: number;
 }
 
 export interface FlightData {
@@ -14,8 +15,18 @@ export interface FlightData {
     longitude: number;
     velocity?: number;
     baroAltitude?: number;
+    geoAltitude?: number;
+    trueTrack?: number;
+    verticalRate?: number;
+    squawk?: string;
     onGround: boolean;
     hasMovement: boolean;
     pathLength: number;
-    flightPath: Array<FlightPath>;
+    flightPath: FlightPath[];
+}
+
+export interface AirplanesApiResponse {
+    airplanes: FlightData[];
+    lastUpdated: number | null;
+    historyHours: number;
 }
