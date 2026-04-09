@@ -1,5 +1,6 @@
 import MapComponent from '@/components/map';
-import { Deferred } from '@inertiajs/react';
+import AppLayout from '@/layouts/app-layout';
+import { Deferred, Head } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { getCountryCode } from '@/countryNameToCode';
 import { FlightData } from '@/types/flights';
@@ -66,7 +67,9 @@ function AirplanesContent({ airplanes }: { airplanes: FlightData[] }) {
 
 export default function Airplanes({ airplanes }: { airplanes?: FlightData[] }) {
     return (
-        <>
+        <AppLayout>
+            <Head title="Flight Tracker" />
+            <div className="flex flex-col gap-4 p-4">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Live Flight Tracker — 60 Minute History</h1>
             <Deferred
                 data="airplanes"
@@ -84,6 +87,7 @@ export default function Airplanes({ airplanes }: { airplanes?: FlightData[] }) {
             >
                 <AirplanesContent airplanes={airplanes ?? []} />
             </Deferred>
-        </>
+            </div>
+        </AppLayout>
     );
 }
