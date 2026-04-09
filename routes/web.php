@@ -16,6 +16,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 Route::get('airplanes', [AirplaneController::class, 'index'])->name('airplanes');
+Route::get('api/airplanes', [AirplaneController::class, 'apiIndex'])->name('api.airplanes');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

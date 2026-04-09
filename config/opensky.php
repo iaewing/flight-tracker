@@ -72,4 +72,31 @@ return [
         'store' => env('OPENSKY_CACHE_STORE', 'default'),
         'prefix' => 'opensky:',
     ],
-]; 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Bounding Box
+    |--------------------------------------------------------------------------
+    |
+    | Geographic bounds for the area to track. Defaults to the Toronto region.
+    |
+    */
+
+    'bounding_box' => [
+        'lamin' => env('OPENSKY_LAMIN', 43.184334),
+        'lomin' => env('OPENSKY_LOMIN', -80.803070),
+        'lamax' => env('OPENSKY_LAMAX', 43.919330),
+        'lomax' => env('OPENSKY_LOMAX', -79.135895),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | History Window
+    |--------------------------------------------------------------------------
+    |
+    | How many hours of position history to retain and serve to the frontend.
+    |
+    */
+
+    'history_hours' => env('OPENSKY_HISTORY_HOURS', 2),
+];
